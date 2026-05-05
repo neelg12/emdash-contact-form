@@ -35,12 +35,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/incsub/emdash-contact-form.git"
+    "url": "https://github.com/neelg12/emdash-contact-form.git"
   },
   "bugs": {
-    "url": "https://github.com/incsub/emdash-contact-form/issues"
+    "url": "https://github.com/neelg12/emdash-contact-form/issues"
   },
-  "homepage": "https://github.com/incsub/emdash-contact-form#readme",
+  "homepage": "https://github.com/neelg12/emdash-contact-form#readme",
   "engines": {
     "node": ">=18"
   }
