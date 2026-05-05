@@ -21,10 +21,22 @@ A built-in contact form for [EmDash CMS](https://emdash.dev). One form, one shor
 ## Install
 
 ```bash
-npm install @incsub/emdash-contact-form
+npm install github:neelg12/emdash-contact-form
 ```
 
-(Or `npm install github:incsub/emdash-contact-form` for an unpublished branch, or `npm install file:../path` for local dev.)
+Pin to a specific release:
+
+```bash
+npm install github:neelg12/emdash-contact-form#v0.1.0
+```
+
+For local development (when working on the plugin itself):
+
+```bash
+npm install file:../path/to/emdash-contact-form
+```
+
+> The package name is `@incsub/emdash-contact-form` — that's the import path you'll use in your code. It will land in `node_modules/@incsub/emdash-contact-form/` regardless of which install method you use.
 
 Then in `astro.config.mjs`:
 
