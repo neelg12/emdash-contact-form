@@ -138,16 +138,17 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
     ],
     portableTextBlocks: [
       {
+        // Single-form plugin — no configurable fields on insert. The Astro
+        // component always renders the hardcoded "contact" form regardless
+        // of any input, so we omit `fields` entirely. EmDash should either
+        // insert the block directly or show a modal with just an Insert
+        // button (no fields to fill in).
         type: "contactForm",
         label: "Contact Form",
         icon: "code",
         description: "Insert your contact form",
         category: "Forms",
         placeholder: "Contact form",
-        // No fields — the slug is fixed, so there's nothing to ask. EmDash
-        // will either insert the block directly or show an empty modal that
-        // the user just confirms with Insert.
-        fields: [],
       },
     ],
     settingsSchema: {
