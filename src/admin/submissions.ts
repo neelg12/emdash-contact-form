@@ -119,27 +119,32 @@ export async function buildSubmissionsList(
     });
   };
 
+  // Build the top action row: chips, search, and (when there's data) Export.
+  // `dispatch_action: true` on the text_input fires a block_action when the
+  // user presses Enter (the standard Block Kit pattern).
+  const topActions: Block[] = [
+    chip("All", "", totalCount),
+    chip("New", "new", newCount),
+    chip("Read", "read", readCount),
+    {
+      type: "text_input",
+      action_id: "search_input",
+      placeholder: "Search name, email, message, or page…  (press Enter)",
+      initial_value: filters.search ?? "",
+      dispatch_action: true,
+    },
+    btn("Search", "apply_search_button", {
+      value: encodeState({ status: activeStatus, search: filters.search ?? "" }),
+    }),
+  ];
+
+  // (Export rendered separately below — admin button URL/redirect doesn't work
+  //  reliably in EmDash's SPA, so we fall back to a plain link.)
+
   const blocks: Block[] = [
     header("Form Submissions"),
     context("Messages received through your contact form. Click View to read and reply."),
-    // Single actions block — chips, search input, and search button all on one row.
-    // `dispatch_action: true` on the text_input fires a block_action when the
-    // user presses Enter (the standard Block Kit pattern).
-    actions([
-      chip("All", "", totalCount),
-      chip("New", "new", newCount),
-      chip("Read", "read", readCount),
-      {
-        type: "text_input",
-        action_id: "search_input",
-        placeholder: "Search name, email, message, or page…  (press Enter)",
-        initial_value: filters.search ?? "",
-        dispatch_action: true,
-      },
-      btn("Search", "apply_search_button", {
-        value: encodeState({ status: activeStatus, search: filters.search ?? "" }),
-      }),
-    ]),
+    actions(topActions),
     divider(),
   ];
 
@@ -221,15 +226,19 @@ export async function buildSubmissionsList(
     blocks.push(context(`Showing ${offset + 1}–${Math.min(offset + PAGE_SIZE, totalFiltered)} of ${totalFiltered}`));
   }
 
-  // Export — only meaningful when there's something to export.
-  if (totalFiltered > 0) {
+  // Export — open the URL in a new tab to bypass the admin SPA's nav handler.
+  // The endpoint responds with Content-Disposition: attachment so the browser
+  // triggers a download. We render two lines: a section with a markdown link
+  // (in case the renderer supports it) and a context line with the bare URL
+  // as a fallback that's always copy-pastable.
+  if (totalCount > 0) {
+    const exportUrl = `/_emdash/api/plugins/contact-form/submissions/export${
+      filters.status ? `?status=${filters.status}` : ""
+    }`;
     blocks.push(
       divider(),
-      context(
-        `Export CSV: /_emdash/api/plugins/contact-form/submissions/export${
-          filters.status ? `?status=${filters.status}` : ""
-        }`,
-      ),
+      section(`📥 [Download all submissions as CSV](${exportUrl})`),
+      context(`If the link above doesn't work, open this URL in a new tab:  ${exportUrl}`),
     );
   }
 
@@ -265,7 +274,6 @@ export async function buildSubmissionDetail(
   }
 
   const title = submissionTitle(data, submissionId);
-  const email = String(data.fields["email"] ?? "");
 
   const blocks: Block[] = [
     actions([btn("← Back", "back_to_submissions_list")]),
@@ -290,8 +298,6 @@ export async function buildSubmissionDetail(
 
     divider(),
     actions([
-      // Reply via mailto if email field exists.
-      ...(email ? [btn("Reply by Email", "reply_email", { url: `mailto:${email}` })] : []),
       btn("Delete", "delete_submission", {
         value: submissionId,
         style: "danger",
