@@ -1,10 +1,10 @@
 import type { PluginContext } from "emdash";
 import type { ContactFormSubmission } from "../types.js";
 import { FIXED_FORM_SLUG } from "../fixed-form.js";
-import { submissionsToCSV } from "../csv.js";
 import {
-  header, section, divider, banner, fields, actions, btn, codeBlock, context,
-  statusBadge, relativeTime, truncate, encodeState, decodeState, type Block,
+  header, section, divider, banner, fields, actions, btn, codeBlock, columns,
+  context, statusBadge, relativeTime, truncate, encodeState, decodeState,
+  type Block,
 } from "./render.js";
 
 // Tight one-line meta string for each submission card.
@@ -39,16 +39,6 @@ function submissionTitle(data: ContactFormSubmission, fallbackId: string): strin
   if (name) return name;
   if (email) return email;
   return fallbackId;
-}
-
-function submissionPreview(data: ContactFormSubmission): string {
-  const message = String(data.fields["message"] ?? "").trim();
-  if (message) return truncate(message.replace(/\s+/g, " "), 160);
-  const fallback = Object.entries(data.fields)
-    .filter(([key]) => !["name", "email"].includes(key))
-    .map(([key, value]) => `${key}: ${String(value ?? "")}`)
-    .join(" • ");
-  return truncate(fallback || "No message provided.", 160);
 }
 
 // ---------------------------------------------------------------------------
@@ -179,28 +169,45 @@ export async function buildSubmissionsList(
       );
     }
   } else {
+    // True table-like layout. Each row is a ColumnsBlock with 4 columns:
+    //   Name (+ email below as small grey)  |  Status  |  Date  |  Actions
+    // The header row uses the same column structure so widths align.
+    blocks.push(
+      columns(
+        [context("NAME")],
+        [context("STATUS")],
+        [context("DATE")],
+        [context("ACTIONS")],
+      ),
+      divider(),
+    );
+
     for (const { id, data } of page) {
       const title = submissionTitle(data, id);
-      const preview = submissionPreview(data);
+      const status = statusBadge(data.status);
+      const when = relativeTime(data.submittedAt);
 
       blocks.push(
-        // Single-line header: who, status, when, where.
-        section(`${title}  —  ${metaLine(data)}`),
-        // Small grey preview line so the message doesn't dominate the card.
-        context(preview),
-        actions([
-          btn("View", "view_submission", { value: id }),
-          btn("Delete", "delete_submission", {
-            value: id,
-            style: "danger",
-            confirm: {
-              title: "Delete submission?",
-              text: "This will soft-delete the submission. It can be purged later via retention settings.",
-              confirm: "Delete",
-              deny: "Cancel",
-            },
-          }),
-        ]),
+        columns(
+          [section(title)],
+          [section(status)],
+          [section(when)],
+          [
+            actions([
+              btn("View", "view_submission", { value: id }),
+              btn("Delete", "delete_submission", {
+                value: id,
+                style: "danger",
+                confirm: {
+                  title: "Delete submission?",
+                  text: "This will soft-delete the submission.",
+                  confirm: "Delete",
+                  deny: "Cancel",
+                },
+              }),
+            ]),
+          ],
+        ),
         divider(),
       );
     }
@@ -227,22 +234,10 @@ export async function buildSubmissionsList(
     blocks.push(context(`Showing ${offset + 1}–${Math.min(offset + PAGE_SIZE, totalFiltered)} of ${totalFiltered}`));
   }
 
-  // Export — generate CSV inline and embed as a data: URI link.
-  // We don't hit /submissions/export because EmDash's plugin route wrapper
-  // strips Response bodies, so a plain CSV endpoint can't deliver bytes.
-  // The data URI approach works with no server round-trip on click.
-  if (totalCount > 0) {
-    const csv = submissionsToCSV(items);
-    const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
-    blocks.push(
-      divider(),
-      section(
-        `📥 [Download all ${totalFiltered} ${
-          totalFiltered === 1 ? "submission" : "submissions"
-        } as CSV](${dataUri})`,
-      ),
-    );
-  }
+  // Export removed from UI for now — sections don't render markdown links
+  // in this EmDash version, and EmDash's plugin route wrapper prevents a
+  // proper download endpoint. The CSV utility (src/csv.ts) remains in the
+  // codebase if/when EmDash gains an escape hatch for non-JSON responses.
 
   return { blocks, ...(toast ? { toast } : {}) };
 }

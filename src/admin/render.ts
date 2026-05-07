@@ -39,10 +39,12 @@ export function actions(elements: Block[]): Block {
   return { type: "actions", elements };
 }
 
+// EmDash's ColumnsBlock schema: { type: "columns", columns: Block[][] }
+// Each item in the outer array is a column; each column is a stack of Blocks.
 export function columns(...cols: Block[][]): Block {
   return {
     type: "columns",
-    columns: cols.map((blocks) => ({ blocks })),
+    columns: cols,
   };
 }
 
