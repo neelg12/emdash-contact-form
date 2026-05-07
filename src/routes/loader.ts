@@ -24,7 +24,10 @@ textarea.cf-input{min-height:120px;resize:vertical}
 `.trim();
 
 // IIFE — keep all state private. Idempotent (won't double-init).
-const LOADER_JS = `(function(){
+// Exported so sandbox-entry.ts can inline it via page:fragments —
+// EmDash's plugin route wrapper coerces all responses to JSON, so we can't
+// reliably serve this as an external script from a plugin route.
+export const LOADER_JS = `(function(){
 if(window.__emdashContactFormInit)return;window.__emdashContactFormInit=true;
 var SUBMIT_URL="/_emdash/api/plugins/contact-form/submit";
 var CONFIG_URL="/_emdash/api/plugins/contact-form/form-config";

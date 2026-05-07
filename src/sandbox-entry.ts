@@ -7,7 +7,7 @@ import { handleSubmissions } from "./routes/submissions.js";
 import { handleSubmission } from "./routes/submission.js";
 import { handleExport } from "./routes/export.js";
 import { handleFormConfig } from "./routes/form-config.js";
-import { handleLoader } from "./routes/loader.js";
+import { handleLoader, LOADER_JS } from "./routes/loader.js";
 import { DEFAULT_SUCCESS_MESSAGE } from "./types.js";
 
 // Called by EmDash's native plugin loader at runtime:
@@ -71,17 +71,19 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
       },
     },
 
-    // Auto-inject the loader script into every public page that uses <EmDashHead />.
-    // This means users only need to drop `<div data-contact-form="..."></div>` —
-    // they don't have to add a <script> tag manually.
+    // Auto-inject the loader script into every public page that uses
+    // <EmDashHead />. We inline the JS directly rather than using
+    // `external-script` because EmDash's plugin route wrapper coerces all
+    // route responses to JSON (`{"data": ...}`), so a plain JS file can't be
+    // served from a plugin route. Inlining bypasses that entirely — the JS
+    // ships in the HTML head of every public page.
     "page:fragments": {
       handler: async (_event: any, _ctx: PluginContext) => {
         return [
           {
-            kind: "external-script",
+            kind: "inline-script",
             placement: "head",
-            src: "/_emdash/api/plugins/contact-form/loader.js",
-            defer: true,
+            code: LOADER_JS,
             key: "contact-form-loader",
           },
         ];

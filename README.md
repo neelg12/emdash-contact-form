@@ -55,14 +55,23 @@ export default defineConfig({
     }),
   ],
 
-  // Required when installing from a local path / symlink (npm `file:` / `link:`).
-  // Skip if you installed from npm or GitHub.
+  // REQUIRED for all install methods. The plugin ships TypeScript source (no
+  // build step), so Vite's SSR build needs to bundle and transpile it instead
+  // of externalizing it as a regular node_modules dep.
   vite: {
-    resolve: { dedupe: ["emdash", "astro"] },
-    optimizeDeps: { exclude: ["@incsub/emdash-contact-form"] },
     ssr: { noExternal: ["@incsub/emdash-contact-form"] },
   },
 });
+```
+
+If you installed from a local path / symlink (npm `file:` or `link:`), also add the deduping hints:
+
+```js
+vite: {
+  resolve: { dedupe: ["emdash", "astro"] },
+  optimizeDeps: { exclude: ["@incsub/emdash-contact-form"] },
+  ssr: { noExternal: ["@incsub/emdash-contact-form"] },
+},
 ```
 
 Restart the dev server. The plugin is ready.
@@ -81,15 +90,9 @@ Two equivalent ways:
 <div data-form-slug="contact"></div>
 ```
 
-The loader script is auto-injected into pages that include `<EmDashHead />` (which all default EmDash layouts do). When you change a setting in the admin, the live form updates automatically.
+The loader script is auto-injected (inlined as a `<script>` tag) into pages that include `<EmDashHead />` — which all default EmDash layouts do. When you change a setting in the admin, the live form updates automatically.
 
-### Manual fallback
-
-If your layout doesn't include `<EmDashHead />`, add this once inside `<head>`:
-
-```html
-<script src="/_emdash/api/plugins/contact-form/loader.js" defer></script>
-```
+> **Important:** your page layout must include `<EmDashHead />`. Without it, the auto-injected loader doesn't ship and the form won't render. Adding a manual `<script src=".../loader.js">` tag isn't currently a working fallback because EmDash wraps plugin route responses as JSON.
 
 ---
 
