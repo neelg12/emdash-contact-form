@@ -11,7 +11,7 @@ A built-in contact form for [EmDash CMS](https://emdash.dev). One form, one shor
 - **One-line shortcode** — drop `<div data-form-slug="contact"></div>` on any page
 - **Editor-friendly** — also available as a Portable Text block in the slash menu
 - **Auto-injected loader** — no manual `<script>` tag needed if your layout uses `<EmDashHead />`
-- **Submissions admin** — list, search, view, soft-delete, CSV export
+- **Submissions admin** — list, search, status filter (All / New / Read), soft-delete
 - **Spam protection** — honeypot, minimum-submit-time, per-IP and global rate limits, same-origin check
 - **Privacy-aware** — soft delete, configurable retention with daily auto-purge
 - **Zero external runtime dependencies** — vanilla JS hydration, no NPM extras at runtime
@@ -106,7 +106,7 @@ contactFormPlugin({
 })
 ```
 
-These are seeded as KV defaults on first install and can be edited later from **Admin → Plugins → Contact Form → Settings**:
+These are seeded as KV defaults on first install and can be edited later from **Admin → Plugins → Form Settings**:
 
 | Setting | Description |
 | --- | --- |
@@ -120,11 +120,12 @@ These are seeded as KV defaults on first install and can be edited later from **
 
 ## Admin UI
 
-**Admin → Plugins → Submissions** lists everything. Click **View** to open one — opening auto-marks it as read. From there: **Reply by Email** (mailto), **Delete** (soft-delete).
+The plugin adds two entries to the sidebar under **Plugins**:
 
-Status filter chips at the top let you switch between **All / New / Read**. Search matches name, email, message body, and page slug.
+- **Form Submissions** — list of all received messages. Status filter chips at the top let you switch between **All / New / Read**. Search matches name, email, message body, and page slug. Click **View** on any row to open the full submission — opening auto-marks it as read. The detail page also has a **Delete** button (soft-delete).
+- **Form Settings** — auto-rendered editor for the success message, privacy note, honeypot toggle, max message length, and retention days.
 
-**Admin → Plugins → Form** shows the embed shortcode and field reference.
+The plugin's root path (`/_emdash/admin/plugins/contact-form`) shows an overview page with submission counts and the embed shortcode for quick copy-paste.
 
 ---
 
@@ -143,7 +144,21 @@ All under `/_emdash/api/plugins/contact-form/`.
 
 Admin routes are protected by EmDash's session middleware automatically.
 
-> The loader script is **inlined into every public page** via the `page:fragments` hook (no separate URL). CSV export is **generated inline in the admin** as a `data:` URI download link (no API endpoint). Both work around EmDash's plugin route wrapper, which JSON-serializes all responses and would mangle non-JSON bodies.
+### Response shape
+
+All routes return plain objects. EmDash wraps them in a `{"data": ...}` envelope before sending to the client. Success and error shapes are uniform:
+
+```jsonc
+// Success
+{ "ok": true,  /* …route-specific fields… */ }
+
+// Error
+{ "ok": false, "error": "<machine_code>", "message"?: "<human_readable>" }
+```
+
+Common error codes: `invalid_json`, `invalid_content_type`, `payload_too_large`, `forbidden_origin`, `rate_limited`, `validation_error`, `not_found`, `method_not_allowed`, `id_required`, `invalid_status`, `server_error`.
+
+> The loader script is **inlined into every public page** via the `page:fragments` hook — there is no `loader.js` URL. EmDash's plugin route wrapper JSON-serializes all responses, so non-JSON content (loader script, CSV download) can't be served from a plugin route.
 
 ---
 

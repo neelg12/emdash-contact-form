@@ -1,11 +1,23 @@
 import type { PluginContext } from "emdash";
 import type { ContactFormSubmission } from "../types.js";
 
-// GET /_emdash/api/plugins/contact-form/submissions
-// Query params: status, formId, limit (default 50), cursor
+/**
+ * REST endpoint: `GET /_emdash/api/plugins/contact-form/submissions`
+ *
+ * Query params:
+ *   - `status`  filter by submission status
+ *   - `formId`  filter by form id (forward-compat; current plugin has one form)
+ *   - `limit`   page size, default 50, capped at 100
+ *   - `cursor`  pagination cursor from a previous response
+ *
+ * Soft-deleted submissions are excluded automatically.
+ *
+ * Returns `{ ok: true, items, cursor, hasMore }` on success or
+ * `{ ok: false, error }` on failure.
+ */
 export async function handleSubmissions(routeCtx: any, ctx: PluginContext): Promise<unknown> {
   if (routeCtx.request.method !== "GET") {
-    return { error: "method_not_allowed" };
+    return { ok: false, error: "method_not_allowed" };
   }
 
   const url = new URL(routeCtx.request.url);
@@ -24,22 +36,29 @@ export async function handleSubmissions(routeCtx: any, ctx: PluginContext): Prom
   if (status) query["where"] = { status };
   else if (formId) query["where"] = { formId };
 
-  const result = await (ctx.storage["submissions"] as any).query(query);
+  interface RawItem {
+    id: string;
+    data: ContactFormSubmission;
+  }
+  interface QueryResult {
+    items: RawItem[];
+    cursor?: string;
+    hasMore: boolean;
+  }
+
+  const result: QueryResult = await (ctx.storage["submissions"] as any).query(query);
 
   const items = result.items
-    .filter((i: any) => i.data.status !== "deleted")
-    .map((i: any) => {
-      const d = i.data as ContactFormSubmission;
-      return {
-        id: i.id,
-        status: d.status,
-        submittedAt: d.submittedAt,
-        formId: d.formId,
-        formTitle: d.formTitle,
-        pageSlug: d.pageSlug,
-        fields: d.fields,
-      };
-    });
+    .filter((i) => i.data.status !== "deleted")
+    .map((i) => ({
+      id: i.id,
+      status: i.data.status,
+      submittedAt: i.data.submittedAt,
+      formId: i.data.formId,
+      formTitle: i.data.formTitle,
+      pageSlug: i.data.pageSlug,
+      fields: i.data.fields,
+    }));
 
-  return { items, cursor: result.cursor, hasMore: result.hasMore };
+  return { ok: true, items, cursor: result.cursor, hasMore: result.hasMore };
 }

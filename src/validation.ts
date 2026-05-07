@@ -74,27 +74,8 @@ export function checkMinSubmitTime(payload: SubmitPayload): boolean {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[\d\s\+\-\(\)]{7,20}$/;
 
-export function validateEmail(value: string): boolean {
+function validateEmail(value: string): boolean {
   return EMAIL_RE.test(value.trim());
-}
-
-export function normalizeFieldName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9_]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "");
-}
-
-export function sanitizeForDisplay(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 function validateFieldValue(

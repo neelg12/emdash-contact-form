@@ -49,7 +49,7 @@ export async function buildOverview(
     section("Customize"),
     context(
       "Edit the success message, privacy note, spam protection, and retention from " +
-      "the Settings tab.",
+      "Form Settings in the sidebar.",
     ),
   ];
 

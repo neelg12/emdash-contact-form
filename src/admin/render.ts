@@ -1,4 +1,14 @@
-// Shared Block Kit block/element builder helpers.
+/**
+ * Block Kit element/block builder helpers.
+ *
+ * These are thin constructors that produce the JSON shapes EmDash's admin
+ * renderer expects (header, section, divider, columns, actions, button,
+ * etc.). All shapes match `@emdash-cms/blocks`'s exported types.
+ *
+ * We use `Record<string, unknown>` as the return type instead of the formal
+ * Block union so we don't have to import block types here — the helpers are
+ * data factories, not type-checked block constructors.
+ */
 
 export type Block = Record<string, unknown>;
 
@@ -22,25 +32,15 @@ export function banner(
   return { type: "banner", title, description, variant };
 }
 
-// Render counts as a fields block (label/value pairs) — avoids StatsBlockComponent
-// runtime shape mismatch. Upgrade to type:"stats" once the exact property contract is confirmed.
-export function statCounts(items: Array<{ label: string; value: string | number }>): Block {
-  return {
-    type: "fields",
-    fields: items.map((i) => ({ label: i.label, value: String(i.value) })),
-  };
-}
-
-export function fields(items: Array<{ label: string; value: string }>): Block {
-  return { type: "fields", fields: items };
-}
-
 export function actions(elements: Block[]): Block {
   return { type: "actions", elements };
 }
 
-// EmDash's ColumnsBlock schema: { type: "columns", columns: Block[][] }
-// Each item in the outer array is a column; each column is a stack of Blocks.
+/**
+ * EmDash's ColumnsBlock schema: `{ type: "columns", columns: Block[][] }`.
+ * Each item in the outer array is a column; each column is a vertical
+ * stack of blocks. All columns are equal-width.
+ */
 export function columns(...cols: Block[][]): Block {
   return {
     type: "columns",
@@ -58,12 +58,9 @@ export function btn(
     url?: string;
   } = {},
 ): Block {
-  // EmDash's runtime uses `label` (matching its form.submit shape).
-  // We include both `label` and `text` for max compatibility with future API changes.
-  const el: Record<string, unknown> = {
+  const el: Block = {
     type: "button",
     label: text,
-    text,
     action_id: actionId,
   };
   if (opts.value !== undefined) el["value"] = opts.value;
@@ -71,13 +68,6 @@ export function btn(
   if (opts.confirm) el["confirm"] = opts.confirm;
   if (opts.url) el["url"] = opts.url;
   return el;
-}
-
-export function table(
-  columns: Array<{ key: string; label: string; format?: string }>,
-  rows: Record<string, unknown>[],
-): Block {
-  return { type: "table", columns, rows };
 }
 
 export function codeBlock(code: string, language = "ts"): Block {
@@ -88,10 +78,11 @@ export function context(text: string): Block {
   return { type: "context", text };
 }
 
-// ---------------------------------------------------------------------------
+// ───────────────────────────────────────────────────────────────────────────
 // Domain helpers
-// ---------------------------------------------------------------------------
+// ───────────────────────────────────────────────────────────────────────────
 
+/** Map a submission status to a short human label with leading icon. */
 export function statusBadge(status: string): string {
   const map: Record<string, string> = {
     new: "🔵 New",
@@ -102,6 +93,7 @@ export function statusBadge(status: string): string {
   return map[status] ?? status;
 }
 
+/** Coarse relative-time formatter ("just now", "5m ago", "3h ago", etc.). */
 export function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -114,16 +106,18 @@ export function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+/** Truncate a string with an ellipsis if longer than `max`. */
 export function truncate(s: string, max = 80): string {
   if (s.length <= max) return s;
   return s.slice(0, max) + "…";
 }
 
-// Encode filter/cursor state for button values.
+/** Encode arbitrary state into a string for embedding in button `value` payloads. */
 export function encodeState(state: Record<string, unknown>): string {
   return JSON.stringify(state);
 }
 
+/** Inverse of `encodeState`. Returns `{}` on parse failure. */
 export function decodeState(value: string): Record<string, unknown> {
   try {
     return JSON.parse(value) as Record<string, unknown>;
