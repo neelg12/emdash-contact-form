@@ -2,7 +2,7 @@ import type { PluginContext } from "emdash";
 import type { ContactFormSubmission } from "../types.js";
 import { FIXED_FORM_SLUG } from "../fixed-form.js";
 import {
-  header, section, divider, banner, fields, actions, btn, codeBlock, columns,
+  header, section, divider, banner, actions, btn, codeBlock, columns,
   context, statusBadge, relativeTime, truncate, encodeState, decodeState,
   type Block,
 } from "./render.js";
@@ -169,29 +169,16 @@ export async function buildSubmissionsList(
       );
     }
   } else {
-    // True table-like layout. Each row is a ColumnsBlock with 4 columns:
-    //   Name (+ email below as small grey)  |  Status  |  Date  |  Actions
-    // The header row uses the same column structure so widths align.
-    blocks.push(
-      columns(
-        [context("NAME")],
-        [context("STATUS")],
-        [context("DATE")],
-        [context("ACTIONS")],
-      ),
-      divider(),
-    );
-
+    // 2-column row layout. Equal-width columns means each gets 50%, which
+    // is enough for the two action buttons to sit side-by-side without
+    // wrapping (the issue with 4 columns was the actions cell only got
+    // ~25% width). Left column carries everything informational.
     for (const { id, data } of page) {
       const title = submissionTitle(data, id);
-      const status = statusBadge(data.status);
-      const when = relativeTime(data.submittedAt);
 
       blocks.push(
         columns(
-          [section(title)],
-          [section(status)],
-          [section(when)],
+          [section(title), context(metaLine(data))],
           [
             actions([
               btn("View", "view_submission", { value: id }),
@@ -272,19 +259,23 @@ export async function buildSubmissionDetail(
 
   const title = submissionTitle(data, submissionId);
 
+  // Each submitted field gets its own pair of blocks: a small grey label
+  // (context) and a full-size section with the value. This gives proper
+  // typography weight to the actual content — the dense `fields()` grid was
+  // too cramped for reading messages.
+  const fieldBlocks: Block[] = Object.entries(data.fields).flatMap(([k, v]) => {
+    const label = k.charAt(0).toUpperCase() + k.slice(1);
+    const value = String(v ?? "—").trim() || "—";
+    return [context(label), section(value)];
+  });
+
   const blocks: Block[] = [
     actions([btn("← Back", "back_to_submissions_list")]),
     header(title),
     context(metaLine(data)),
     divider(),
 
-    // The submitted fields are the heart of a submission — show them first.
-    fields(
-      Object.entries(data.fields).map(([k, v]) => ({
-        label: k,
-        value: String(v ?? "—"),
-      })),
-    ),
+    ...fieldBlocks,
 
     divider(),
     context(
