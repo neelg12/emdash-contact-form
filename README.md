@@ -136,14 +136,14 @@ All under `/_emdash/api/plugins/contact-form/`.
 | --- | --- | --- | --- |
 | `POST` | `submit` | Public | Visitor submission |
 | `GET` | `form-config` | Public | Form config for the loader |
-| `GET` | `loader.js` | Public | Hydration script |
 | `GET` | `submissions` | Admin | Paginated list |
 | `GET` | `submission?id=…` | Admin | Single submission |
 | `POST` | `submission?id=…` | Admin | Update status `{status: "read" \| ...}` |
 | `DELETE` | `submission?id=…` | Admin | Soft-delete |
-| `GET` | `submissions/export` | Admin | CSV download |
 
 Admin routes are protected by EmDash's session middleware automatically.
+
+> The loader script is **inlined into every public page** via the `page:fragments` hook (no separate URL). CSV export is **generated inline in the admin** as a `data:` URI download link (no API endpoint). Both work around EmDash's plugin route wrapper, which JSON-serializes all responses and would mangle non-JSON bodies.
 
 ---
 

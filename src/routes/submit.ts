@@ -14,32 +14,32 @@ import {
 // submission needs and small enough that bots can't trivially exhaust memory.
 const MAX_BODY_BYTES = 64 * 1024;
 
+// IMPORTANT: Always return plain objects, never `new Response(...)`.
+// EmDash's plugin route wrapper drops Response bodies (it serializes the
+// Response object itself, not its body). Plain returns get auto-wrapped into
+// `{"data": <plain object>}` which the loader handles via `unwrapApiPayload`.
+// Status codes are not configurable through this path; the loader checks
+// `json.ok` and `json.error` to decide what UI to show.
 export async function handleSubmit(routeCtx: any, ctx: PluginContext): Promise<unknown> {
   const request: Request = routeCtx.request;
 
   // Enforce JSON content-type.
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
-    return new Response(JSON.stringify({ ok: false, error: "invalid_content_type" }), {
-      status: 415,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { ok: false, error: "invalid_content_type" };
   }
 
   // Size guard: reject obviously oversized bodies before parsing.
   const contentLength = parseInt(request.headers.get("content-length") ?? "0", 10);
   if (contentLength > MAX_BODY_BYTES) {
-    return new Response(JSON.stringify({ ok: false, error: "payload_too_large" }), {
-      status: 413,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { ok: false, error: "payload_too_large" };
   }
 
   // Origin check — only accept submissions from the same site that served the
-  // page. Loader.js always uses same-origin fetch, so legitimate clients
-  // always send a matching Origin (or none, e.g. older browsers). We only
-  // reject when an Origin is present AND it doesn't match the host. Missing
-  // Origin is allowed to keep server-to-server tests working.
+  // page. Loader uses same-origin fetch, so legitimate clients always send a
+  // matching Origin (or none, e.g. older browsers). We only reject when an
+  // Origin is present AND it doesn't match the host. Missing Origin is
+  // allowed to keep server-to-server tests working.
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
   if (origin && host) {
@@ -47,17 +47,11 @@ export async function handleSubmit(routeCtx: any, ctx: PluginContext): Promise<u
       const originHost = new URL(origin).host;
       if (originHost !== host) {
         ctx.log.info("Contact form: cross-origin submit rejected", { origin, host });
-        return new Response(JSON.stringify({ ok: false, error: "forbidden_origin" }), {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        });
+        return { ok: false, error: "forbidden_origin" };
       }
     } catch {
       // Malformed Origin — reject.
-      return new Response(JSON.stringify({ ok: false, error: "forbidden_origin" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return { ok: false, error: "forbidden_origin" };
     }
   }
 
@@ -76,10 +70,7 @@ export async function handleSubmit(routeCtx: any, ctx: PluginContext): Promise<u
   }
 
   if (!payload) {
-    return new Response(JSON.stringify({ ok: false, error: "invalid_json" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { ok: false, error: "invalid_json" };
   }
 
   if (!payload.fields || typeof payload.fields !== "object" || Array.isArray(payload.fields)) {
@@ -93,16 +84,17 @@ export async function handleSubmit(routeCtx: any, ctx: PluginContext): Promise<u
   // fallback counter so direct-IP deployments still have a backstop.
   const ip = getClientIp(request);
   if (!checkRateLimit(ip)) {
-    return new Response(
-      JSON.stringify({ ok: false, error: "rate_limited", message: "Too many submissions. Please wait a moment." }),
-      { status: 429, headers: { "Content-Type": "application/json" } },
-    );
+    return {
+      ok: false,
+      error: "rate_limited",
+      message: "Too many submissions. Please wait a moment.",
+    };
   }
 
   // Spam protection.
   const requireHoneypot = (await ctx.kv.get<boolean>("settings:requireHoneypot")) ?? true;
   if (requireHoneypot && !checkHoneypot(payload)) {
-    // Return 200 OK to not reveal detection to bots.
+    // Return ok:true to not reveal detection to bots.
     ctx.log.info("Contact form: honeypot triggered", { formId: submittedFormId });
     return { ok: true, submissionId: "ignored" };
   }
@@ -146,10 +138,7 @@ export async function handleSubmit(routeCtx: any, ctx: PluginContext): Promise<u
     await (ctx.storage["submissions"] as any).put(id, submission);
   } catch (err) {
     ctx.log.error("Contact form: failed to save submission", { error: String(err) });
-    return new Response(
-      JSON.stringify({ ok: false, error: "server_error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    );
+    return { ok: false, error: "server_error" };
   }
 
   return { ok: true, submissionId: id };

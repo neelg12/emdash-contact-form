@@ -5,9 +5,8 @@ import { handleAdminInteraction } from "./admin/index.js";
 import { handleSubmit } from "./routes/submit.js";
 import { handleSubmissions } from "./routes/submissions.js";
 import { handleSubmission } from "./routes/submission.js";
-import { handleExport } from "./routes/export.js";
 import { handleFormConfig } from "./routes/form-config.js";
-import { handleLoader, LOADER_JS } from "./routes/loader.js";
+import { LOADER_JS } from "./routes/loader.js";
 import { DEFAULT_SUCCESS_MESSAGE } from "./types.js";
 
 // Called by EmDash's native plugin loader at runtime:
@@ -220,11 +219,9 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
       handler: async (routeCtx: any) => handleFormConfig(routeCtx, routeCtx as PluginContext),
     },
 
-    // Loader script — visitors include this once via <script src="...">.
-    "loader.js": {
-      public: true,
-      handler: async (routeCtx: any) => handleLoader(routeCtx, routeCtx as PluginContext),
-    },
+    // (No `loader.js` route — the script is inlined into every public page
+    //  via the page:fragments hook above. EmDash's plugin route wrapper
+    //  coerces all responses to JSON, so a separate JS file can't be served.)
 
     // ── Admin (auto-protected by EmDash session middleware) ───────────────────
 
@@ -234,9 +231,10 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
     submission: {
       handler: async (routeCtx: any) => handleSubmission(routeCtx, routeCtx as PluginContext),
     },
-    "submissions/export": {
-      handler: async (routeCtx: any) => handleExport(routeCtx, routeCtx as PluginContext),
-    },
+    // (No `submissions/export` route — CSV is generated inline in the admin
+    //  view and embedded as a data: URI link. Avoids the EmDash plugin route
+    //  body-stripping issue.)
+
     // Block Kit — all admin UI interactions route here.
     admin: {
       handler: async (routeCtx: any) => {

@@ -5,10 +5,7 @@ import type { ContactFormSubmission } from "../types.js";
 // Query params: status, formId, limit (default 50), cursor
 export async function handleSubmissions(routeCtx: any, ctx: PluginContext): Promise<unknown> {
   if (routeCtx.request.method !== "GET") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { error: "method_not_allowed" };
   }
 
   const url = new URL(routeCtx.request.url);

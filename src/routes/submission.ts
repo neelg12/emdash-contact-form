@@ -2,16 +2,17 @@ import type { PluginContext } from "emdash";
 import type { ContactFormSubmission } from "../types.js";
 
 // GET/POST/DELETE /_emdash/api/plugins/contact-form/submission?id=<id>
+//
+// All returns are plain objects (never Response). EmDash's plugin route wrapper
+// drops Response bodies, so we let it auto-serialize plain returns into the
+// `{"data": ...}` envelope it sends to clients.
 export async function handleSubmission(routeCtx: any, ctx: PluginContext): Promise<unknown> {
   const request: Request = routeCtx.request;
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
   if (!id) {
-    return new Response(JSON.stringify({ error: "id is required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { error: "id_required" };
   }
 
   const method = request.method.toUpperCase();
@@ -19,10 +20,7 @@ export async function handleSubmission(routeCtx: any, ctx: PluginContext): Promi
   if (method === "GET") {
     const data = (await (ctx.storage["submissions"] as any).get(id)) as ContactFormSubmission | null;
     if (!data || data.status === "deleted") {
-      return new Response(JSON.stringify({ error: "Not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return { error: "not_found" };
     }
     return { id, ...data };
   }
@@ -33,26 +31,17 @@ export async function handleSubmission(routeCtx: any, ctx: PluginContext): Promi
     try {
       body = (await request.json()) as { status?: string };
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return { error: "invalid_json" };
     }
 
     const allowed = ["new", "read", "archived", "deleted"];
     if (!body.status || !allowed.includes(body.status)) {
-      return new Response(
-        JSON.stringify({ error: `status must be one of: ${allowed.join(", ")}` }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return { error: `status_must_be_one_of: ${allowed.join(", ")}` };
     }
 
     const data = (await (ctx.storage["submissions"] as any).get(id)) as ContactFormSubmission | null;
     if (!data) {
-      return new Response(JSON.stringify({ error: "Not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return { error: "not_found" };
     }
 
     const now = new Date().toISOString();
@@ -72,10 +61,7 @@ export async function handleSubmission(routeCtx: any, ctx: PluginContext): Promi
   if (method === "DELETE") {
     const data = (await (ctx.storage["submissions"] as any).get(id)) as ContactFormSubmission | null;
     if (!data) {
-      return new Response(JSON.stringify({ error: "Not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return { error: "not_found" };
     }
 
     // Soft delete.
@@ -87,8 +73,5 @@ export async function handleSubmission(routeCtx: any, ctx: PluginContext): Promi
     return { ok: true, deleted: id };
   }
 
-  return new Response(JSON.stringify({ error: "Method not allowed" }), {
-    status: 405,
-    headers: { "Content-Type": "application/json" },
-  });
+  return { error: "method_not_allowed" };
 }

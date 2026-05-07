@@ -1,7 +1,7 @@
-import type { PluginContext } from "emdash";
-
-// PUBLIC. GET /_emdash/api/plugins/contact-form/loader.js
-// Self-contained vanilla JS that hydrates `<div data-contact-form="<id>">` shortcodes.
+// Self-contained vanilla JS that hydrates `<div data-form-slug="contact">` shortcodes.
+// Inlined into every public page via the page:fragments hook in sandbox-entry.ts.
+// The plugin DOES NOT expose a public route for this — EmDash's plugin route
+// wrapper coerces all responses to JSON so a separate JS file can't be served.
 
 const LOADER_CSS = `
 .cf-wrapper{max-width:560px;font-family:system-ui,-apple-system,sans-serif;color:inherit}
@@ -199,16 +199,3 @@ if(document.readyState==="loading"){
   init();
 }
 })();`;
-
-export async function handleLoader(_routeCtx: any, _ctx: PluginContext): Promise<unknown> {
-  return new Response(LOADER_JS, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/javascript; charset=utf-8",
-      // The loader is static; cache aggressively. Plugin upgrades that change
-      // its contents will invalidate via the new bytes (browsers re-validate
-      // after max-age expiry). 1 day is a sensible default for site assets.
-      "Cache-Control": "public, max-age=86400",
-    },
-  });
-}

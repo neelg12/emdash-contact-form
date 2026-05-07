@@ -1,6 +1,7 @@
 import type { PluginContext } from "emdash";
 import type { ContactFormSubmission } from "../types.js";
 import { FIXED_FORM_SLUG } from "../fixed-form.js";
+import { submissionsToCSV } from "../csv.js";
 import {
   header, section, divider, banner, fields, actions, btn, codeBlock, context,
   statusBadge, relativeTime, truncate, encodeState, decodeState, type Block,
@@ -226,19 +227,20 @@ export async function buildSubmissionsList(
     blocks.push(context(`Showing ${offset + 1}–${Math.min(offset + PAGE_SIZE, totalFiltered)} of ${totalFiltered}`));
   }
 
-  // Export — open the URL in a new tab to bypass the admin SPA's nav handler.
-  // The endpoint responds with Content-Disposition: attachment so the browser
-  // triggers a download. We render two lines: a section with a markdown link
-  // (in case the renderer supports it) and a context line with the bare URL
-  // as a fallback that's always copy-pastable.
+  // Export — generate CSV inline and embed as a data: URI link.
+  // We don't hit /submissions/export because EmDash's plugin route wrapper
+  // strips Response bodies, so a plain CSV endpoint can't deliver bytes.
+  // The data URI approach works with no server round-trip on click.
   if (totalCount > 0) {
-    const exportUrl = `/_emdash/api/plugins/contact-form/submissions/export${
-      filters.status ? `?status=${filters.status}` : ""
-    }`;
+    const csv = submissionsToCSV(items);
+    const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
     blocks.push(
       divider(),
-      section(`📥 [Download all submissions as CSV](${exportUrl})`),
-      context(`If the link above doesn't work, open this URL in a new tab:  ${exportUrl}`),
+      section(
+        `📥 [Download all ${totalFiltered} ${
+          totalFiltered === 1 ? "submission" : "submissions"
+        } as CSV](${dataUri})`,
+      ),
     );
   }
 
