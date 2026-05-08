@@ -2,7 +2,9 @@
 node_modules/
 
 # Build output
-dist/
+# Note: `dist/` IS committed for GitHub-distributed installs — consumers'
+# hosting may not be able to run `prepare` reliably, so we ship the built
+# output directly. Run `npm run build` before each release commit.
 build/
 *.tsbuildinfo
 

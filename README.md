@@ -20,14 +20,16 @@ A built-in contact form for [EmDash CMS](https://emdash.dev). One form, one shor
 
 ## Install
 
+Pin to a release tag (recommended for production):
+
 ```bash
-npm install github:neelg12/emdash-contact-form
+npm install github:neelg12/emdash-contact-form#v0.2.0
 ```
 
-Pin to a specific release:
+Or track the latest commit on `main`:
 
 ```bash
-npm install github:neelg12/emdash-contact-form#v0.1.0
+npm install github:neelg12/emdash-contact-form
 ```
 
 For local development (when working on the plugin itself):
@@ -54,27 +56,19 @@ export default defineConfig({
       plugins: [contactFormPlugin()],
     }),
   ],
-
-  // REQUIRED for all install methods. The plugin ships TypeScript source (no
-  // build step), so Vite's SSR build needs to bundle and transpile it instead
-  // of externalizing it as a regular node_modules dep.
-  vite: {
-    ssr: { noExternal: ["@incsub/emdash-contact-form"] },
-  },
 });
 ```
 
-If you installed from a local path / symlink (npm `file:` or `link:`), also add the deduping hints:
-
-```js
-vite: {
-  resolve: { dedupe: ["emdash", "astro"] },
-  optimizeDeps: { exclude: ["@incsub/emdash-contact-form"] },
-  ssr: { noExternal: ["@incsub/emdash-contact-form"] },
-},
-```
-
 Restart the dev server. The plugin is ready.
+
+> **Local-path installs only** (`npm install file:` or `npm link`) need a small Vite hint to dedupe the symlinked dependencies. Skip this if you installed from GitHub or npm:
+>
+> ```js
+> vite: {
+>   resolve: { dedupe: ["emdash", "astro"] },
+>   optimizeDeps: { exclude: ["@incsub/emdash-contact-form"] },
+> },
+> ```
 
 ---
 

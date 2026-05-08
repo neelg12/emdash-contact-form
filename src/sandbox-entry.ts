@@ -32,7 +32,7 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
     // ResolvedPlugin rather than a StandardPluginDefinition).
     // ─────────────────────────────────────────────────────────────────────
     id: "contact-form",
-    version: "0.1.0",
+    version: "0.2.0",
     capabilities: ["hooks.page-fragments:register"],
 
     storage: {
@@ -177,10 +177,6 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
               label: "Just click Insert — there's only one form",
               placeholder: "contact",
               initial_value: "contact",
-              // Speculative — EmDash may or may not honour these. Harmless
-              // if ignored; keeps the field disabled when supported.
-              readonly: true,
-              disabled: true,
             },
           ],
         },

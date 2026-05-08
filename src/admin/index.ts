@@ -22,7 +22,7 @@ interface AdminInteraction {
 export async function handleAdminInteraction(
   interaction: AdminInteraction,
   ctx: PluginContext,
-) {
+): Promise<unknown> {
   const { type, page, widget_id, action_id, value, values } = interaction;
 
   // ---------------------------------------------------------------------------

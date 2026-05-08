@@ -1,26 +1,38 @@
 {
   "name": "@incsub/emdash-contact-form",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Contact form plugin for EmDash CMS — collect submissions, manage them in the admin UI, and embed forms via a single-line shortcode.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./sandbox": "./src/sandbox-entry.ts",
-    "./astro": "./src/astro/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./sandbox": {
+      "types": "./dist/sandbox-entry.d.ts",
+      "import": "./dist/sandbox-entry.js"
+    },
+    "./astro": {
+      "types": "./dist/astro/index.d.ts",
+      "import": "./dist/astro/index.js"
+    }
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "emdash": ">=0.9.0"
   },
   "devDependencies": {
+    "tsup": "^8.0.0",
     "typescript": "^5.0.0"
   },
   "keywords": [
