@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Now ships compiled JavaScript and TypeScript declarations from `dist/`** instead of raw TypeScript source. Build is performed by `tsup` and runs automatically on `npm install` via the `prepare` script. Consumers no longer need the `vite.ssr.noExternal` hint in their Astro config — install becomes a single `plugins: [contactFormPlugin()]` line. This aligns with standard npm package convention and gives consumers proper IDE type-completion for plugin options.
+- **Now ships compiled JavaScript and TypeScript declarations from `dist/`** instead of raw TypeScript source. Build is performed by `tsup` (`npm run build`) and the compiled `dist/` is committed to the repo so GitHub installs work without requiring the consumer's host to run a build step. Consumers no longer need the `vite.ssr.noExternal` hint in their Astro config — install becomes a single `plugins: [contactFormPlugin()]` line. This aligns with standard npm package convention and gives consumers proper IDE type-completion for plugin options.
 - Astro components (`ContactForm.astro`) continue to ship as source — they cannot be bundled.
 
 ### Migration from 0.1.x

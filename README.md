@@ -32,7 +32,7 @@ Or track the latest commit on `main`:
 npm install github:neelg12/emdash-contact-form
 ```
 
-For local development (when working on the plugin itself):
+For local development against an in-progress copy of the plugin (see the [Developing the plugin](#developing-the-plugin) section for the full workflow):
 
 ```bash
 npm install file:../path/to/emdash-contact-form
@@ -86,7 +86,7 @@ Two equivalent ways:
 
 The loader script is auto-injected (inlined as a `<script>` tag) into pages that include `<EmDashHead />` — which all default EmDash layouts do. When you change a setting in the admin, the live form updates automatically.
 
-> **Important:** your page layout must include `<EmDashHead />`. Without it, the auto-injected loader doesn't ship and the form won't render. Adding a manual `<script src=".../loader.js">` tag isn't currently a working fallback because EmDash wraps plugin route responses as JSON.
+> **Important:** your page layout must include `<EmDashHead />`. That's where the loader script gets injected. Without it, the form won't render — there is no separate `loader.js` URL you can fall back to.
 
 ---
 
@@ -191,13 +191,48 @@ If you serve behind Cloudflare or another reverse proxy, forward `x-forwarded-fo
 
 ---
 
-## Contributing / sharing
+## Developing the plugin
 
-MIT-licensed. To publish your own variant:
+Want to fix a bug or add a feature? Workflow:
+
+```bash
+git clone https://github.com/neelg12/emdash-contact-form.git
+cd emdash-contact-form
+npm install
+```
+
+Make your changes in `src/`. Then **build before committing or testing in a consumer site**:
+
+```bash
+npm run build       # regenerates dist/
+npm run typecheck   # optional: confirms TS is clean
+```
+
+The compiled `dist/` is **committed to git** so GitHub installs work without needing the consumer's host to run a build step. If you change `src/` without rebuilding, your changes won't reach consumers until you do `npm run build` and commit `dist/`.
+
+To test changes locally in a consumer site before pushing:
+
+```bash
+# In your consumer site
+npm install file:../path/to/emdash-contact-form
+
+# After every plugin change:
+cd ../path/to/emdash-contact-form && npm run build && cd -
+rm -rf node_modules/.vite .astro
+npm run dev
+```
+
+---
+
+## Forking / publishing your own variant
+
+MIT-licensed. To ship your own version:
 
 1. Update `name` in `package.json` to your scope (e.g. `@yourorg/emdash-contact-form`).
-2. Update `entrypoint` and `componentsEntry` in `src/index.ts` to the new package name.
-3. `npm publish` (or push to GitHub for `npm install github:...` consumers).
+2. Update `entrypoint` and `componentsEntry` in `src/index.ts` to match the new package name.
+3. Update `repository.url`, `bugs.url`, `homepage` in `package.json`.
+4. `npm run build` to refresh `dist/`.
+5. Commit, tag a release, and push to GitHub — or `npm publish` for npm registry.
 
 ---
 
