@@ -5,6 +5,12 @@ All notable changes to `@incsub/emdash-contact-form` are documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — 2026-05-08
+
+### Fixed
+
+- **409 Conflict on first insert of the Contact Form block on a new page.** The Portable Text block field's `action_id` was `"id"`, which collided with the page-level `id` in EmDash's save payload — so the first save attempted to create the page with id `"contact"`, conflicting with the seeded `/contact` page. Renamed to `formSlug`. Subsequent inserts always worked because the conflict left a draft behind that turned later saves into updates. No code or config changes required for consumers.
+
 ## [0.2.0] — 2026-05-08
 
 ### Changed
@@ -63,5 +69,6 @@ Initial release.
 - The loader script is inlined (~3 KB) on every public page rather than served as a cacheable external file. This is a workaround for EmDash's plugin route wrapper, which JSON-serializes all responses and would mangle a JavaScript file.
 - CSV export of submissions is generated but not surfaced in the admin UI for the same reason. The utility (`src/csv.ts`) is retained for direct use.
 
-[0.2.0]: https://github.com/neelg12/emdash-contact-form/releases/tag/v0.2.0
-[0.1.0]: https://github.com/neelg12/emdash-contact-form/releases/tag/v0.1.0
+[0.2.1]: https://github.com/wpmudev/emdash-contact-form/releases/tag/v0.2.1
+[0.2.0]: https://github.com/wpmudev/emdash-contact-form/releases/tag/v0.2.0
+[0.1.0]: https://github.com/wpmudev/emdash-contact-form/releases/tag/v0.1.0

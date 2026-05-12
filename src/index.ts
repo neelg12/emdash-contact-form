@@ -25,7 +25,7 @@ export function contactFormPlugin(
 ): PluginDescriptor<ContactFormPluginOptions> {
   return {
     id: "contact-form",
-    version: "0.2.0",
+    version: "0.2.1",
     // Native format — required to ship Astro components and Portable Text
     // blocks. (Standard format runs in V8 isolates on Cloudflare; native
     // runs in-host.)

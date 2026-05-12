@@ -32,7 +32,7 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
     // ResolvedPlugin rather than a StandardPluginDefinition).
     // ─────────────────────────────────────────────────────────────────────
     id: "contact-form",
-    version: "0.2.0",
+    version: "0.2.1",
     capabilities: ["hooks.page-fragments:register"],
 
     storage: {
@@ -162,8 +162,13 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
           // EmDash always shows an insert modal — declaring a custom `fields`
           // array overrides the default URL input. We can't suppress the
           // modal entirely, so we pre-fill it: the user just clicks Insert.
-          // Whatever value lands on the block is ignored by ContactForm.astro
-          // anyway (single-form plugin — slug is always "contact").
+          //
+          // `action_id` is deliberately NOT "id" — when the block's data is
+          // included in the page-save payload, a top-level `id` property
+          // collides with the page's own `id`, causing a 409 Conflict on the
+          // first insert if a page with that slug already exists. Using
+          // `formSlug` namespaces it safely. The Astro component ignores the
+          // value anyway (single-form plugin — slug is always "contact").
           type: "contactForm",
           label: "Contact Form",
           icon: "code",
@@ -173,7 +178,7 @@ export function createPlugin(_options: ContactFormPluginOptions = {}) {
           fields: [
             {
               type: "text_input",
-              action_id: "id",
+              action_id: "formSlug",
               label: "Just click Insert — there's only one form",
               placeholder: "contact",
               initial_value: "contact",

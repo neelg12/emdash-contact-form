@@ -1,6 +1,6 @@
 {
   "name": "@incsub/emdash-contact-form",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Contact form plugin for EmDash CMS — collect submissions, manage them in the admin UI, and embed forms via a single-line shortcode.",
   "type": "module",
   "exports": {
